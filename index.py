@@ -1,33 +1,28 @@
-import requests, random, time, functools
+import requests, random, functools, json, os
 from flask import Flask, jsonify, request, g, abort
 from datetime import datetime
 
+with open('desa.json', 'r') as f:
+    data_desa = json.load(f)['data']
+
 app = Flask(__name__)
 
-### MUST MOVE TO ENV ###
-data_desa = {
-    '3521152001': {
-        'kode': '3521152001',
-        'nama_desa': 'SUMBERBENING',
-        'url': 'http://localhost/sumberbening/index.php/api/v1'
-    },
-    '3521152005': {
-        'kode': '3521152005',
-        'nama_desa': 'DERO',
-        'url': 'http://localhost/dero/index.php/api/v1'
-    }
-}
-TRUSTED_HOSTS = ['trustedhost.com']
-### MUST MOVE TO ENV ###
+app.config['ENV'] = os.getenv('ENV')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['TRUSTED_HOST'] = os.getenv('TRUSTED_HOST', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 
 def authorize(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         # Get the host from the Host header
-        host = request.headers.get('Host', '')
+        g.host = request.headers.get('Host', '')
+
+        apiKey = request.headers.get('X-API-KEY', '')
+        if apiKey == app.config['SECRET_KEY']:
+            abort(400, description="Invalid API KEY")
         
         # Validate the host against the trusted list
-        if not any(host.endswith(trusted) for trusted in TRUSTED_HOSTS):
+        if not any(g.host.endswith(trusted) for trusted in app.config['TRUSTED_HOST']):
             abort(400, description="Invalid Host header")
         # Code before route handler
         print(f"authorize for {request.path}")

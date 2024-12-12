@@ -1,0 +1,14 @@
+{
+    "data": {
+        "3521152001": {
+            "kode": "3521152001",
+            "nama_desa": "SUMBERBENING",
+            "url": "http://localhost/sumberbening/index.php/api/v1"
+        },
+        "3521152005": {
+            "kode": "3521152005",
+            "nama_desa": "DERO",
+            "url": "http://localhost/dero/index.php/api/v1"
+        }
+    }
+}
