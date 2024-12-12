@@ -1,0 +1,266 @@
+import requests, random, time, functools
+from flask import Flask, jsonify, request, g, abort
+from datetime import datetime
+
+app = Flask(__name__)
+
+### MUST MOVE TO ENV ###
+data_desa = {
+    '3521152001': {
+        'kode': '3521152001',
+        'nama_desa': 'SUMBERBENING',
+        'url': 'http://localhost/sumberbening/index.php/api/v1'
+    },
+    '3521152005': {
+        'kode': '3521152005',
+        'nama_desa': 'DERO',
+        'url': 'http://localhost/dero/index.php/api/v1'
+    }
+}
+TRUSTED_HOSTS = ['trustedhost.com']
+### MUST MOVE TO ENV ###
+
+def authorize(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Get the host from the Host header
+        host = request.headers.get('Host', '')
+        
+        # Validate the host against the trusted list
+        if not any(host.endswith(trusted) for trusted in TRUSTED_HOSTS):
+            abort(400, description="Invalid Host header")
+        # Code before route handler
+        print(f"authorize for {request.path}")
+        result = func(*args, **kwargs)
+        # Code after route handler
+        print("authorize finished")
+        return result
+    return wrapper
+
+@app.before_request
+def serialize_request():
+    r_kode_desa = request.args.get('d')
+    r_include = request.args.get('t')
+    kode_desa = []
+    includes = []
+
+    if r_kode_desa and r_kode_desa != '':
+
+        if r_kode_desa[0] == '{' and r_kode_desa[-1] == '}':
+            kode_desa = r_kode_desa[1:len(r_kode_desa) - 1].split(',')
+        else:
+            kode_desa = r_kode_desa.split(',')
+    else:
+        kode_desa = list(data_desa.keys())
+
+    if r_include and r_include != '':
+        includes = r_include.split(',')
+    # Example external API (replace with the actual API you want to call)
+    g.headers = {
+        'Content': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-API-KEY': 'your-api-key-1',
+        'Origin': 'https://trusted-host.com'
+    }
+
+    g.kode_desa = kode_desa
+    g.includes = includes
+    
+
+# Sample route
+@app.route('/api', methods=['GET'])
+def home():
+    return 'API WORKS'
+
+@app.route('/api/d', methods=['GET'])
+@authorize
+def desa():    
+    try:
+        data = {}
+        features = []
+        count = 1
+        for kode in g.kode_desa:
+            response = requests.get(data_desa[kode]['url']+'/d', headers=g.headers, verify=False)  # Send GET request
+            response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
+            desa = response.json()['data']        # Parse the JSON response
+
+            if 'geojson' in g.includes:
+                for json in desa['geojson']['features']:
+                    json['id'] = count
+                    features.append(json)
+                    count = count + 1
+
+                if 'geojson' not in data:
+                    data['geojson'] = {
+                        'type': 'FeatureCollection',
+                        'features': features
+                    }
+
+
+        return jsonify({"status": "success", "data": data})
+    except requests.exceptions.RequestException as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    # return jsonify({"message": "Hello, API!"})
+
+# endpoint for religion
+@app.route('/api/st/<string:slug>', methods=['GET'])
+@authorize
+def statistik(slug):
+    try:
+        data = {}
+        for kode in g.kode_desa:
+            response = requests.get(f"{data_desa[kode]['url']}/st/{slug}", headers=g.headers, verify=False)  # Send GET request
+            response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
+            result = response.json()['data']        # Parse the JSON response
+
+            for key in result:
+                value = result[key]
+                id = value['id']
+
+                if id not in data:
+                    data[id] = {'nama': value['nama'], 'jumlah': value['jumlah'], 'laki': value['laki'], 'perempuan': value['perempuan']}
+                else:
+                    data[id]['jumlah'] = data[id]['jumlah'] + value['jumlah']
+                    data[id]['laki'] = data[id]['laki'] + value['laki']
+                    data[id]['perempuan'] = data[id]['perempuan'] + value['perempuan']
+
+        str_data = {str(key): value for key, value in data.items()}
+
+        # convert to list
+        arr_data = list(str_data.values())   
+
+        return jsonify({"status": "success", "data": arr_data})
+    except requests.exceptions.RequestException as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    # return jsonify({"data": {
+    #     'ISLAM': random.randint(1000, 5000),
+    #     'KRISTEN': random.randint(500, 5000),
+    #     'KATHOLIK': random.randint(200, 500),
+    #     'HINDU': random.randint(100, 500),
+    #     'BUDHA': random.randint(100, 500),
+    #     'KHONGHUCU': random.randint(50, 500),
+    #     'LAINNYA': random.randint(10, 500),
+    # }})
+
+# endpoint for idm
+@app.route('/api/idm', methods=['GET'])
+# @authorize
+def idm():
+    req_tahun = request.args.get('tahun')
+
+    if req_tahun and req_tahun != '':
+        tahun = [int(req_tahun)]
+        count = 1
+    else:
+        # make range tahun now = 2024, so count 5 start 2019
+        count = 5
+        tahun = []
+        for i in range(count+1): tahun.append(datetime.now().year - count + i)
+
+    try:
+        values = []
+        for i, thn in enumerate(tahun):
+
+            values.append({'tahun': str(thn)})
+            
+            for kode in g.kode_desa:
+                response = requests.get(f"{data_desa[kode]['url']}/idm/{thn}", headers=g.headers, verify=False)  # Send GET request
+                response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
+                idm_data = response.json()['data']        # Parse the JSON response
+
+                penambahan = skor_minimal = skor_saat_ini = 0
+                status = target_status = 'Tidak ada status'
+                identitas = data_desa[kode]['nama_desa']
+                _tahun = thn
+
+                if 'SUMMARIES' in idm_data['idm']:
+                    identitas = idm_data['idm']['IDENTITAS'][0]['nama_desa']
+                    skor_saat_ini, status, target_status, skor_minimal, penambahan, _tahun = idm_data['idm']['SUMMARIES'].values()
+
+                
+                values[i][identitas] = skor_saat_ini
+                # if len(result) < i+1:
+                # result.append({
+                #     'tahun': _tahun,
+                #     'desa': identitas, 
+                #     'kode': kode,
+                #     'status': status,
+                #     'target_status': target_status,
+                #     'skor_saat_ini': skor_saat_ini,
+                #     'skor_minimal': skor_minimal,
+                #     'penambahan': penambahan
+                # })
+
+                # result[i]['desa'] = identitas
+                # result[i]['penambahan'].append(penambahan)
+                # result[i]['skor_minimal'].append(skor_minimal)
+                # result[i]['skor_saat_ini'].append(skor_saat_ini)
+                # result[i]['status'].append(status)
+                # result[i]['target_status'].append(target_status)
+
+        return jsonify({"status": "success", "data": values})
+    except requests.exceptions.RequestException as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
+# endpoint for info
+@app.route('/api/i', methods=['GET'])
+# @authorize
+def info():
+    try:
+        data = []
+        meta = []
+        for kode in g.kode_desa:
+            response = requests.get(f"{data_desa[kode]['url']}/info", headers=g.headers, verify=False)  # Send GET request
+            response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
+            result = response.json()['data']
+
+            meta.append({kode: result})
+
+            for i, info in enumerate(result):
+                if len(data) < i+1:
+                    data.append({'title': info['title'], 'count': info['count']})
+                else:
+                    data[i]['count'] = data[i]['count'] + info['count']
+
+        return jsonify({"status": "success", "data": data, 'meta': meta})
+    except requests.exceptions.RequestException as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# endpoint for kehadiran
+@app.route('/api/k', methods=['GET'])
+@authorize
+def kehadiran():
+    # hasil selama 30 hari
+    hadir = 0
+    for i in range(30):
+        hadir = hadir + random.randint(5, 10)
+
+    # asumsi total aparat 10
+    # (total kehadiran / total aparat * 30) * 100
+    return jsonify({"data": hadir/300*100})
+
+# endpoint for sex
+@app.route('/api/s', methods=['GET'])
+@authorize
+def jenis_kelamin():
+    return jsonify({"data": {"L": 100, "P": 250}})
+
+# endpoint for study
+@app.route('/api/std', methods=['GET'])
+@authorize
+def pendidikan():
+    return jsonify({"data": {
+        'TIDAK / BELUM SEKOLAH': 10,
+        'BELUM TAMAT SD/SEDERAJAT': 10,
+        'TAMAT SD / SEDERAJAT': 10,
+        'SLTP/SEDERAJAT': 10,
+        'SLTA / SEDERAJAT': 10,
+        'DIPLOMA I / II': 10,
+        'AKADEMI/ DIPLOMA III/S. MUDA': 10,
+        'DIPLOMA IV/ STRATA I': 10,
+        'STRATA II': 10,
+        'STRATA III': 10,
+    }})
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5001)
