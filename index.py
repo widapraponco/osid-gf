@@ -18,13 +18,11 @@ def authorize(func):
         g.host = request.headers.get('Host', '')
         # print(g.host)
 
-        print(app.config['TRUSTED_HOSTS'])
         apiKey = request.headers.get('X-API-KEY', '')
-        if apiKey == app.config['SECRET_KEY']:
+        if apiKey != app.config['SECRET_KEY']:
             abort(400, description="Invalid API KEY")
         
         # Validate the host against the trusted list
-        print(app.config['TRUSTED_HOSTS'])
         if not any(g.host.endswith(trusted) for trusted in app.config['TRUSTED_HOSTS']):
             abort(400, description="Invalid Host header")
         # Code before route handler
@@ -67,6 +65,7 @@ def serialize_request():
 
 # Sample route
 @app.route('/api', methods=['GET'])
+@authorize
 def home():
     return 'API WORKS'
 
@@ -261,4 +260,8 @@ def pendidikan():
     }})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(
+        debug=os.getenv('DEBUG', 'False').lower() in ('true', '1', 't'),
+        host='0.0.0.0',
+        port=int(os.getenv('PORT', 5000))
+    )
