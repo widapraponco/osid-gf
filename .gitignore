@@ -1,0 +1,8 @@
+.env
+
+sql_files
+
+alter_constraint_statements.sql
+compare_sql.py
+generated_alter_statements.sql
+table_data_output.txt

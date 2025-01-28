@@ -9,20 +9,23 @@ app = Flask(__name__)
 
 app.config['ENV'] = os.getenv('ENV')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['TRUSTED_HOST'] = os.getenv('TRUSTED_HOST', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
+app.config['TRUSTED_HOSTS'] = os.getenv('TRUSTED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 
 def authorize(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         # Get the host from the Host header
         g.host = request.headers.get('Host', '')
+        # print(g.host)
 
+        print(app.config['TRUSTED_HOSTS'])
         apiKey = request.headers.get('X-API-KEY', '')
         if apiKey == app.config['SECRET_KEY']:
             abort(400, description="Invalid API KEY")
         
         # Validate the host against the trusted list
-        if not any(g.host.endswith(trusted) for trusted in app.config['TRUSTED_HOST']):
+        print(app.config['TRUSTED_HOSTS'])
+        if not any(g.host.endswith(trusted) for trusted in app.config['TRUSTED_HOSTS']):
             abort(400, description="Invalid Host header")
         # Code before route handler
         print(f"authorize for {request.path}")
@@ -68,7 +71,7 @@ def home():
     return 'API WORKS'
 
 @app.route('/api/d', methods=['GET'])
-@authorize
+# @authorize
 def desa():    
     try:
         data = {}
@@ -99,7 +102,7 @@ def desa():
 
 # endpoint for religion
 @app.route('/api/st/<string:slug>', methods=['GET'])
-@authorize
+# @authorize
 def statistik(slug):
     try:
         data = {}
@@ -113,11 +116,11 @@ def statistik(slug):
                 id = value['id']
 
                 if id not in data:
-                    data[id] = {'nama': value['nama'], 'jumlah': value['jumlah'], 'laki': value['laki'], 'perempuan': value['perempuan']}
+                    data[id] = {'nama': value['nama'], 'jumlah': int(value['jumlah']), 'laki': int(value['laki']), 'perempuan': int(value['perempuan'])}
                 else:
-                    data[id]['jumlah'] = data[id]['jumlah'] + value['jumlah']
-                    data[id]['laki'] = data[id]['laki'] + value['laki']
-                    data[id]['perempuan'] = data[id]['perempuan'] + value['perempuan']
+                    data[id]['jumlah'] = data[id]['jumlah'] + int(value['jumlah'])
+                    data[id]['laki'] = data[id]['laki'] + int(value['laki'])
+                    data[id]['perempuan'] = data[id]['perempuan'] + int(value['perempuan'])
 
         str_data = {str(key): value for key, value in data.items()}
 
