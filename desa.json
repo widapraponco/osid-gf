@@ -8,7 +8,7 @@
         "3521152005": {
             "kode": "3521152005",
             "nama_desa": "DERO",
-            "url": "http://dero.ngawikab.go.id/dero/index.php/api/v1"
+            "url": "http://dero.ngawikab.go.id/index.php/api/v1"
         }
     }
 }
