@@ -28,4 +28,4 @@ ENV FLASK_ENV=production
 
 # Run the Flask application
 # CMD ["flask", "run", "--host=0.0.0.0"]
-CMD ["gunicorn", "--bind", "0.0.0.0", "--workers", "4", "index:app"]
+CMD ["/usr/local/bin/gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "index:app"]
