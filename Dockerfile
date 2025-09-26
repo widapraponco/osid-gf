@@ -4,6 +4,12 @@ FROM python:3.9-slim
 # Set the working directory in the container
 WORKDIR /app
 
+# Install dependencies needed for some Python packages (e.g., if using psycopg2 or other packages)
+# Combine RUN commands for efficiency and to minimize layers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy the requirements file into the container
 COPY requirements.txt .
 
@@ -18,7 +24,8 @@ EXPOSE 5000
 
 # Set environment variables (if needed)
 ENV FLASK_APP=index.py
-ENV FLASK_ENV=development
+ENV FLASK_ENV=production
 
 # Run the Flask application
-CMD ["flask", "run", "--host=0.0.0.0"]
+# CMD ["flask", "run", "--host=0.0.0.0"]
+CMD ["gunicorn", "--bind", "0.0.0.0", "--workers", "4", "index:app"]
