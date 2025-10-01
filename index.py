@@ -1,6 +1,9 @@
 import requests, random, functools, json, os
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, g, abort
 from datetime import datetime
+
+load_dotenv()
 
 with open('desa.json', 'r') as f:
     data_desa = json.load(f)['data']
@@ -76,6 +79,7 @@ def desa():
         data = {}
         features = []
         count = 1
+        print(g.includes)
         for kode in g.kode_desa:
             response = requests.get(data_desa[kode]['url']+'/d', headers=g.headers, verify=False)  # Send GET request
             response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
