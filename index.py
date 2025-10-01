@@ -79,9 +79,9 @@ def desa():
         data = {}
         features = []
         count = 1
-        print(g.includes)
+        # print(g.includes)
         for kode in g.kode_desa:
-            response = requests.get(data_desa[kode]['url']+'/d', headers=g.headers, verify=False)  # Send GET request
+            response = requests.get(data_desa[kode]['url']+'/d', headers=g.headers, verify=True)  # Send GET request
             response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
             desa = response.json()['data']        # Parse the JSON response
 
@@ -110,7 +110,7 @@ def statistik(slug):
     try:
         data = {}
         for kode in g.kode_desa:
-            response = requests.get(f"{data_desa[kode]['url']}/st/{slug}", headers=g.headers, verify=False)  # Send GET request
+            response = requests.get(f"{data_desa[kode]['url']}/st/{slug}", headers=g.headers, verify=True)  # Send GET request
             response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
             result = response.json()['data']        # Parse the JSON response
 
@@ -165,7 +165,7 @@ def idm():
             values.append({'tahun': str(thn)})
             
             for kode in g.kode_desa:
-                response = requests.get(f"{data_desa[kode]['url']}/idm/{thn}", headers=g.headers, verify=False)  # Send GET request
+                response = requests.get(f"{data_desa[kode]['url']}/idm/{thn}", headers=g.headers, verify=True)  # Send GET request
                 response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
                 idm_data = response.json()['data']        # Parse the JSON response
 
@@ -211,7 +211,7 @@ def info():
         data = []
         meta = []
         for kode in g.kode_desa:
-            response = requests.get(f"{data_desa[kode]['url']}/info", headers=g.headers, verify=False)  # Send GET request
+            response = requests.get(f"{data_desa[kode]['url']}/info", headers=g.headers, verify=True)  # Send GET request
             response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
             result = response.json()['data']
 

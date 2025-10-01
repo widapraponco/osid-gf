@@ -3,22 +3,22 @@
     "3521152001": {
       "kode": "3521152001",
       "nama_desa": "SUMBERBENING",
-      "url": "http://sumberbening.ngawikab.go.id/index.php/api/v1"
+      "url": "https://sumberbening.ngawikab.go.id/index.php/api/v1"
     },
     "3521152005": {
       "kode": "3521152005",
       "nama_desa": "DERO",
-      "url": "http://dero.ngawikab.go.id/index.php/api/v1"
+      "url": "https://dero.ngawikab.go.id/index.php/api/v1"
     },
     "3521072016": {
       "kode": "3521072016",
       "nama_desa": "REJUNO",
-      "url": "http://rejuno.ngawikab.go.id/index.php/api/v1"
+      "url": "https://rejuno.ngawikab.go.id/index.php/api/v1"
     },
     "3521112011": {
       "kode": "3521112011",
       "nama_desa": "GEMARANG",
-      "url": "http://gemarang.ngawikab.go.id/index.php/api/v1"
+      "url": "https://gemarang.ngawikab.go.id/index.php/api/v1"
     }
   }
 }
