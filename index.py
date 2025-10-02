@@ -79,11 +79,10 @@ def desa():
         data = {}
         features = []
         count = 1
-        # print(g.includes)
         for kode in g.kode_desa:
             response = requests.get(data_desa[kode]['url']+'/d', headers=g.headers, verify=True)  # Send GET request
             response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
-            desa = response.json()['data']        # Parse the JSON response
+            data = response.json()['data']        # Parse the JSON response
 
             if 'geojson' in g.includes:
                 for json in desa['geojson']['features']:
@@ -96,11 +95,15 @@ def desa():
                         'type': 'FeatureCollection',
                         'features': features
                     }
+            else:
+                del data['geojson']
+                del data['path']
 
 
         return jsonify({"status": "success", "data": data})
     except requests.exceptions.RequestException as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(str(e))
+        return jsonify({"status": "error", "data": data})
     # return jsonify({"message": "Hello, API!"})
 
 # endpoint for religion
@@ -132,7 +135,8 @@ def statistik(slug):
 
         return jsonify({"status": "success", "data": arr_data})
     except requests.exceptions.RequestException as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(str(e))
+        return jsonify({"status": "error", "data": arr_data})
     # return jsonify({"data": {
     #     'ISLAM': random.randint(1000, 5000),
     #     'KRISTEN': random.randint(500, 5000),
@@ -201,7 +205,8 @@ def idm():
 
         return jsonify({"status": "success", "data": values})
     except requests.exceptions.RequestException as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(str(e))
+        return jsonify({"status": "error", "data": values})
     
 # endpoint for info
 @app.route('/api/i', methods=['GET'])
@@ -225,7 +230,8 @@ def info():
 
         return jsonify({"status": "success", "data": data, 'meta': meta})
     except requests.exceptions.RequestException as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(str(e))
+        return jsonify({"status": "error", "data": data})
 
 # endpoint for kehadiran
 @app.route('/api/k', methods=['GET'])
