@@ -73,38 +73,36 @@ def home():
     return 'API WORKS'
 
 @app.route('/api/d', methods=['GET'])
-# @authorize
+@authorize
 def desa():    
     try:
         data = {}
-        features = []
-        count = 1
         for kode in g.kode_desa:
             response = requests.get(data_desa[kode]['url']+'/d', headers=g.headers, verify=True)  # Send GET request
             response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
             data = response.json()['data']        # Parse the JSON response
-
-            if 'geojson' in g.includes:
-                for json in desa['geojson']['features']:
-                    json['id'] = count
-                    features.append(json)
-                    count = count + 1
-
-                if 'geojson' not in data:
-                    data['geojson'] = {
-                        'type': 'FeatureCollection',
-                        'features': features
-                    }
-            else:
-                del data['geojson']
-                del data['path']
-
 
         return jsonify({"status": "success", "data": data})
     except requests.exceptions.RequestException as e:
         print(str(e))
         return jsonify({"status": "error", "data": data})
     # return jsonify({"message": "Hello, API!"})
+
+# endpoint for geojson map
+@app.route('/api/g', methods=['GET'])
+@authorize
+def geojson():
+    try:
+        data = {}
+        for kode in g.kode_desa:
+            response = requests.get(data_desa[kode]['url']+'/g', headers=g.headers, verify=True)  # Send GET request
+            response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
+            data = response.json()['data']        # Parse the JSON response
+
+        return jsonify({"status": "success", "data": data})
+    except requests.exceptions.RequestException as e:
+        print(str(e))
+        return jsonify({"status": "error", "data": data})
 
 # endpoint for religion
 @app.route('/api/st/<string:slug>', methods=['GET'])
