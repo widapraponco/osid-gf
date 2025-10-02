@@ -94,12 +94,18 @@ def desa():
 def geojson():
     try:
         data = {}
+        features = []
         for kode in g.kode_desa:
             response = requests.get(data_desa[kode]['url']+'/g', headers=g.headers, verify=True)  # Send GET request
             response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
             data = response.json()['data']        # Parse the JSON response
 
-        return jsonify({"status": "success", "data": data})
+            for json in data['features']:
+                json['id'] = count
+                features.append(json)
+                count = count + 1
+
+        return jsonify({"status": "success", "data":  { 'type': 'FeatureCollection', 'features': features }})
     except requests.exceptions.RequestException as e:
         print(str(e))
         return jsonify({"status": "error", "data": data})
