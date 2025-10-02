@@ -106,7 +106,7 @@ def geojson():
 
 # endpoint for religion
 @app.route('/api/st/<string:slug>', methods=['GET'])
-# @authorize
+@authorize
 def statistik(slug):
     try:
         data = {}
@@ -147,7 +147,7 @@ def statistik(slug):
 
 # endpoint for idm
 @app.route('/api/idm', methods=['GET'])
-# @authorize
+@authorize
 def idm():
     req_tahun = request.args.get('tahun')
 
@@ -208,7 +208,7 @@ def idm():
     
 # endpoint for info
 @app.route('/api/i', methods=['GET'])
-# @authorize
+@authorize
 def info():
     try:
         data = []
@@ -235,14 +235,17 @@ def info():
 @app.route('/api/k', methods=['GET'])
 @authorize
 def kehadiran():
-    # hasil selama 30 hari
-    hadir = 0
-    for i in range(30):
-        hadir = hadir + random.randint(5, 10)
+    try:
+        data = {}
+        for kode in g.kode_desa:
+            response = requests.get(data_desa[kode]['url']+'/k', headers=g.headers, verify=True)  # Send GET request
+            response.raise_for_status()   # Raise an HTTPError for bad responses (4xx and 5xx)
+            data = response.json()['data']        # Parse the JSON response
 
-    # asumsi total aparat 10
-    # (total kehadiran / total aparat * 30) * 100
-    return jsonify({"data": hadir/300*100})
+        return jsonify({"status": "success", "data": data})
+    except requests.exceptions.RequestException as e:
+        print(str(e))
+        return jsonify({"status": "error", "data": data})
 
 # endpoint for sex
 @app.route('/api/s', methods=['GET'])
